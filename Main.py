@@ -1,14 +1,16 @@
-import csv
 import ctypes
+import os
+import shutil
+import subprocess
 import sys
+import zipfile
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QPalette, QBrush, QPixmap, QImage, QFont, QIcon
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow, QApplication, QInputDialog, QFileDialog
 
-from AboutProgram import AboutProgram
 from Authors import Authors
-from Registration import Registration
+from Layouts import Layouts
 
 myAppId = 'mycompany.myproduct.subproduct.version'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
@@ -17,7 +19,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
 class Ui_Dialog(object):
     def setupUi(self, Dialog, topic):
         Dialog.setObjectName("Dialog")
-        Dialog.setMinimumSize(1024, 768)
+        Dialog.setMinimumSize(1280, 720)
         if topic == "white":
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/white_background.jpg")))
@@ -43,37 +45,26 @@ class Ui_Dialog(object):
         self.ButtonAftors.setGeometry(QtCore.QRect(300, 340, 551, 71))
         self.ButtonAftors.setObjectName("ButtonAftors")
         self.ButtonAftors.setFont(QFont('Century Gothic', 13))
-        self.AboutProgram = QtWidgets.QPushButton(Dialog)
-        self.AboutProgram.setGeometry(QtCore.QRect(300, 420, 551, 71))
-        self.AboutProgram.setObjectName("AboutProgram")
-        self.AboutProgram.setFont(QFont('Century Gothic', 13))
+        self.ImportExport = QtWidgets.QPushButton(Dialog)
+        self.ImportExport.setGeometry(QtCore.QRect(300, 420, 551, 71))
+        self.ImportExport.setObjectName("AboutProgram")
+        self.ImportExport.setFont(QFont('Century Gothic', 13))
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.ButtonStart.setText(_translate("Dialog", "Начать собеседование"))
+        self.ButtonStart.setText(_translate("Dialog", "Выбрать макет"))
         self.ButtonAftors.setText(_translate("Dialog", "Авторы"))
-        self.AboutProgram.setText(_translate("Dialog", "О программе"))
+        self.ImportExport.setText(_translate("Dialog", "Импорт/Экспорт"))
 
 
 class Main(QMainWindow, Ui_Dialog):
     resized = QtCore.pyqtSignal()
 
-    def __init__(self, topic="white", x=1024, y=768, m=False):
+    def __init__(self, topic="white", x=1280, y=720, m=False):
         super().__init__()
-        # Y = yadisk.YaDisk(token="AQAAAAA7SpTSAAd8zbO0v4G6B0dHklAfN0lo13g")
-        # Y.download("base.csv", "base.csv")
-        self.nX = []
-        self.nY = []
-        with open("base.csv", encoding='utf-8') as r_file:
-            file_reader = csv.reader(r_file, delimiter=";")
-            for row in file_reader:
-                if row[0] == "Titles":
-                    continue
-                self.nX.append(list(map(int, row[3:-1])))
-                self.nY.append(int(row[-1]))
         self.topic = topic
         if topic == "white":
             self.im = QImage()
@@ -113,38 +104,66 @@ class Main(QMainWindow, Ui_Dialog):
         self.ButtonAftors.move(int(self.width() * 0.286), int(self.height() * 0.46))
         self.ButtonAftors.setFixedSize(int(self.width() * 0.4276), int(self.height() * 0.095))
 
-        self.AboutProgram.move(int(self.width() * 0.286), int(self.height() * 0.56))
-        self.AboutProgram.setFixedSize(int(self.width() * 0.4276), int(self.height() * 0.095))
+        self.ImportExport.move(int(self.width() * 0.286), int(self.height() * 0.56))
+        self.ImportExport.setFixedSize(int(self.width() * 0.4276), int(self.height() * 0.095))
 
         return super(Main, self).resizeEvent(event)
 
     def logic(self):
         self.ButtonReColour.clicked.connect(self.re_color)
         self.ButtonStart.clicked.connect(self.new_win)
-        self.ButtonAftors.clicked.connect(self.aftors)
-        self.AboutProgram.clicked.connect(self.about_program)
+        self.ButtonAftors.clicked.connect(self.autors)
+        self.ImportExport.clicked.connect(self.import_export)
 
-    def about_program(self):
-        self.close()
-        self.w = AboutProgram(self.topic, self.width(), self.height(), self.isMaximized())
-        self.w.show()
+    def import_export(self):
+        action, ok_pressed = QInputDialog.getItem(
+            self, "Импорт/экспорт", "Выберите действие",
+            ("Экспортировать макеты на рабочий стол", "Импортировать макеты"), 0, False)
+        if not ok_pressed:
+            return
+        if action == "Экспортировать макеты на рабочий стол":
+            shutil.make_archive("layouts", 'zip', "layouts")
+            output = subprocess.check_output(r'powershell -command "[Environment]::GetFolderPath(\"Desktop\")"')
+            path = output.decode().strip()
+            try:
+                os.rename('layouts.zip', f'{path}/layouts.zip')
+            except Exception:
+                os.remove(f'{path}/layouts.zip')
+                os.rename('layouts.zip', f'{path}\layouts.zip')
+        else:
+            message = f'Вы уверены? Макеты, которые у вас есть сейчас, заменятся новыми'
+            reply = QtWidgets.QMessageBox.question(self, 'Уведомление', message,
+                                                   QtWidgets.QMessageBox.Yes,
+                                                   QtWidgets.QMessageBox.No)
+            if reply == QtWidgets.QMessageBox.No:
+                return
+            desc = subprocess.check_output(r'powershell -command "[Environment]::GetFolderPath(\"Desktop\")"')
+            desc = desc.decode("utf-8").rstrip()
+            file_name = QFileDialog.getOpenFileName(
+                self, 'Выбрать архив с макетами', desc,
+                'Архив (*.zip);')[0]
+            shutil.rmtree('layouts')
+            os.mkdir('layouts')
+            with zipfile.ZipFile(file_name, 'r') as zip_file:
+                zip_file.extractall('layouts')
 
-    def aftors(self):
+    def autors(self):
         self.close()
         self.w = Authors(self.topic, self.width(), self.height(), self.isMaximized())
         self.w.show()
 
     def new_win(self):
         self.close()
-        self.w = Registration(self.topic, self.width(), self.height(), self.isMaximized(), self.nX, self.nY)
+        self.w = Layouts(self.topic, self.width(), self.height(), self.isMaximized())
         self.w.show()
 
     def re_color(self):
         if self.topic == "white":
             self.topic = "black"
             self.im.load("images/black_background.jpg")
-            style = 'background: rgb(10,10,10);color: rgb(255,255,255);border-style: solid; \
-                            border-radius: 4px; border-width: 3px;'
+            style = 'background: rgb(10,10,10);color: rgb(150,150,150); \
+                     border-color: rgb(50,50,50);border-style: solid; \
+                     border-radius: 4px; border-width: 3px;'
             self.ButtonReColour.setIcon(QtGui.QIcon('images/re_colour_black.png'))
         else:
             self.topic = "white"
@@ -153,7 +172,7 @@ class Main(QMainWindow, Ui_Dialog):
             self.ButtonReColour.setIcon(QtGui.QIcon('images/re_colour_white.png'))
         self.ButtonStart.setStyleSheet(style)
         self.ButtonAftors.setStyleSheet(style)
-        self.AboutProgram.setStyleSheet(style)
+        self.ImportExport.setStyleSheet(style)
         self.resize_image()
 
     def design(self):
@@ -161,21 +180,18 @@ class Main(QMainWindow, Ui_Dialog):
             style = 'background: rgb(255,255,255);color: rgb(0,0,0);'
             self.ButtonStart.setStyleSheet(style)
             self.ButtonAftors.setStyleSheet(style)
-            self.AboutProgram.setStyleSheet(style)
+            self.ImportExport.setStyleSheet(style)
         else:
-            style = 'background: rgb(10,10,10);color: rgb(255,255,255); \
-                                 border-color: rgb(255,255,255);border-style: solid; \
+            style = 'background: rgb(10,10,10);color: rgb(150,150,150); \
+                                 border-color: rgb(50,50,50);border-style: solid; \
                                  border-radius: 4px; border-width: 3px;'
             self.ButtonStart.setStyleSheet(style)
             self.ButtonAftors.setStyleSheet(style)
-            self.AboutProgram.setStyleSheet(style)
+            self.ImportExport.setStyleSheet(style)
 
 
-try:
-    if __name__ == '__main__':
-        app = QApplication(sys.argv)
-        ex = Main()
-        ex.show()
-        sys.exit(app.exec())
-except Exception as e:
-    print(e.__class__.__name__)
+if __name__ == '__main__':
+    app = QApplication(sys.argv)
+    ex = Main()
+    ex.show()
+    sys.exit(app.exec())

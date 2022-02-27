@@ -11,7 +11,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
 class Ui_Dialog(object):
     def setupUi(self, Dialog, topic):
         Dialog.setObjectName("Dialog")
-        Dialog.setMinimumSize(1024, 768)
+        Dialog.setMinimumSize(1280, 720)
         if topic == "white":
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/white_background.jpg")))
@@ -114,10 +114,10 @@ class Authors(QMainWindow, Ui_Dialog):
             style = 'background: rgb(255,255,255);color: rgb(0,0,0);'
             self.ButtonBack.setStyleSheet(style)
         else:
-            style = 'background: rgb(10,10,10);color: rgb(255,255,255); \
-                                             border-color: rgb(255,255,255);border-style: solid; \
-                                             border-radius: 4px; border-width: 3px;'
+            style = 'background: rgb(10,10,10);color: rgb(150,150,150); \
+                                 border-color: rgb(50,50,50);border-style: solid; \
+                                 border-radius: 4px; border-width: 3px;'
             self.ButtonBack.setStyleSheet(style)
-            style = 'color: rgb(255,255,255);'
+            style = 'color: rgb(150,150,150);'
             self.labelLinkDaniil.setStyleSheet(style)
             self.labelLinkAlbert.setStyleSheet(style)

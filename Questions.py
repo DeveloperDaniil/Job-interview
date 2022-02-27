@@ -1,10 +1,10 @@
 import ctypes
+from _csv import writer
 
-from PyQt5 import QtCore, QtWidgets
-from PyQt5.QtGui import QPalette, QBrush, QPixmap, QFont, QImage, QIcon
+from PyQt5 import QtCore, QtWidgets, QtGui
+from PyQt5.QtGui import QPalette, QBrush, QPixmap, QImage, QIcon
 from PyQt5.QtWidgets import QMainWindow
 
-import Dictionary_Of_Questions
 from Neuron import processing
 from Result import Result
 
@@ -15,7 +15,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
 class Ui_Dialog(object):
     def setupUi(self, Dialog, topic):
         Dialog.setObjectName("Dialog")
-        Dialog.setMinimumSize(1024, 768)
+        Dialog.setMinimumSize(1280, 720)
         if topic == "white":
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/white_background.jpg")))
@@ -24,63 +24,72 @@ class Ui_Dialog(object):
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/black_background.jpg")))
             Dialog.setPalette(palette)
-        font = QFont('Century Gothic', 18)
+        font = QtGui.QFont()
+        font.setFamily("Century Gothic")
+        font.setPointSize(10)
+        Dialog.setFont(font)
+
+        self.TextEdit = QtWidgets.QTextBrowser(Dialog)
+        self.TextEdit.setGeometry(QtCore.QRect(10, 10, 1260, 570))
+        self.TextEdit.setMinimumSize(QtCore.QSize(0, 2))
+        self.TextEdit.setFont(font)
+        self.TextEdit.setObjectName("TextEdit")
+
+        font.setPointSize(14)
+
+        self.pushButtonNext = QtWidgets.QPushButton(Dialog)
+        self.pushButtonNext.setGeometry(QtCore.QRect(540, 590, 330, 30))
+        self.pushButtonNext.setFont(font)
+        self.pushButtonNext.setObjectName("pushButtonPred")
+
+        font.setPointSize(16)
         font.setBold(True)
-        self.labelQuestion = QtWidgets.QLabel(Dialog)
-        self.labelQuestion.setFont(font)
-        self.labelQuestion.setGeometry(QtCore.QRect(330, 20, 700, 41))
-        self.labelQuestion.setAlignment(QtCore.Qt.AlignCenter)
-        self.labelQuestion.setObjectName("labelQuestion")
-        self.labelExplanation1 = QtWidgets.QLabel(Dialog)
-        self.labelExplanation1.setGeometry(QtCore.QRect(10, 80, 451, 541))
-        self.labelExplanation1.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        self.labelExplanation1.setObjectName("labelExplanation1")
-        self.labelExplanation1.setFont(QFont('Century Gothic', 12))
-        self.labelExplanation1.setWordWrap(True)
-        self.labelExplanation2 = QtWidgets.QLabel(Dialog)
-        self.labelExplanation2.setGeometry(QtCore.QRect(580, 80, 451, 541))
-        self.labelExplanation2.setAlignment(QtCore.Qt.AlignLeading | QtCore.Qt.AlignLeft | QtCore.Qt.AlignTop)
-        self.labelExplanation2.setObjectName("labelExplanation2")
-        self.labelExplanation2.setFont(QFont('Century Gothic', 12))
-        self.labelExplanation2.setWordWrap(True)
-        self.trash = QtWidgets.QLabel(Dialog)
-        self.trash.setGeometry(QtCore.QRect(40, 690, 270, 51))
-        self.trash.setObjectName("trash")
-        self.trash.setFont(QFont('Century Gothic', 10))
-        self.spinBoxScore = QtWidgets.QSpinBox(Dialog)
-        self.spinBoxScore.setGeometry(QtCore.QRect(320, 700, 91, 31))
-        self.spinBoxScore.setMaximum(10)
-        self.spinBoxScore.setObjectName("spinBoxScore")
-        self.spinBoxScore.setFont(QFont('Century Gothic', 10))
-        self.ButtonNext = QtWidgets.QPushButton(Dialog)
-        self.ButtonNext.setGeometry(QtCore.QRect(720, 690, 281, 51))
-        self.ButtonNext.setObjectName("ButtonNext")
-        self.ButtonNext.setFont(QFont('Century Gothic', 10))
+
+        self.label = QtWidgets.QLabel(Dialog)
+        self.label.setGeometry(QtCore.QRect(10, 590, 1260, 30))
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setObjectName("label")
+
+        self.horizontalLayoutWidget = QtWidgets.QWidget(Dialog)
+        self.horizontalLayoutWidget.setGeometry(QtCore.QRect(10, 630, 1260, 80))
+        self.horizontalLayoutWidget.setObjectName("horizontalLayoutWidget")
+        self.radioLayout = QtWidgets.QHBoxLayout(self.horizontalLayoutWidget)
+        self.radioLayout.setContentsMargins(0, 0, 0, 0)
+        self.radioLayout.setObjectName("radioLayout")
+
+        # ////////////////////////////////////////////////////////////////////////////
+
+        font.setPointSize(30)
+
+        self.spinBox = QtWidgets.QSpinBox(Dialog)
+        self.spinBox.setGeometry(QtCore.QRect(940, 590, 330, 30))
+        self.spinBox.setFont(font)
+        self.spinBox.setObjectName("spinBox")
+
         self.retranslateUi(Dialog)
         QtCore.QMetaObject.connectSlotsByName(Dialog)
 
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.labelQuestion.setText(_translate("Dialog", ""))
-        self.labelExplanation1.setText(_translate("Dialog", ""))
-        self.labelExplanation2.setText(_translate("Dialog", ""))
-        self.trash.setText(_translate("Dialog", "Оцените кандидата от 0 до 10:"))
-        self.ButtonNext.setText(_translate("Dialog", "Следующий вопрос"))
+        self.label.setText(_translate("Dialog", "Внимание! Это анонимный опрос. Пожалуйста, отвечайте честно."))
+        self.pushButtonNext.setText(_translate("Dialog", "Следующий вопрос"))
 
 
 class Questions(QMainWindow, Ui_Dialog):
     resized = QtCore.pyqtSignal()
 
-    def __init__(self, topic, x, y, m, data, nX, nY):
+    def __init__(self, topic, x, y, m, name, self1=None):
         super().__init__()
-        self.nX, self.nY = nX, nY
         self.topic = topic
-        self.data = data
-        self.dict = Dictionary_Of_Questions.dict
-        self.keys = list(self.dict.keys())
-        self.i = 0
-        self.mark = 0
+        self.lst_radio = []
+        self.data = []
+        self.back = False
+        self.type = ""
+        self.number = 1
+        self.self1 = self1
+        self.name = name
         if topic == "white":
             self.im = QImage()
             self.im.load("images/white_background.jpg")
@@ -109,57 +118,252 @@ class Questions(QMainWindow, Ui_Dialog):
         self.resized.emit()
         self.resize_image()
 
-        self.labelQuestion.move(int(self.width() / 2) - int(self.labelQuestion.width() / 2), self.labelQuestion.y())
+        self.TextEdit.move(int(self.width() * 0.0078125), int(self.height() * 0.013888888888888))
+        self.TextEdit.setFixedSize(int(self.width() * 0.984375), int(self.height() * 0.79166666))
 
-        self.labelExplanation1.setFixedSize(int(self.width() * 0.449), int(self.height() * 0.76))
+        self.label.move(int(self.width() * 0.0078125), int(self.height() * 0.819444444444444444))
+        self.label.setFixedSize(int(self.width() * 0.71875), int(self.height() * 0.041666666666))
 
-        self.trash.move(self.trash.x(), int(self.height() * 0.8955))
+        self.pushButtonNext.move(int(self.width() * 0.734375), int(self.height() * 0.819444444444444444))
+        self.pushButtonNext.setFixedSize(int(self.width() * 0.2578125), int(self.height() * 0.041666666666))
 
-        self.spinBoxScore.move(self.spinBoxScore.x(), int(self.height() * 0.91))
+        self.horizontalLayoutWidget.move(int(self.width() * 0.0078125), int(self.height() * 0.875))
+        self.horizontalLayoutWidget.setFixedSize(int(self.width() * 0.984375), int(self.height() * 0.1111111111111111))
 
-        self.ButtonNext.move(int(self.width() * 0.7), int(self.height() * 0.9))
-        self.ButtonNext.setFixedSize(int(self.width() * 0.266), int(self.height() * 0.074))
-
-        self.labelExplanation2.move(int(self.width() * 0.552), self.labelExplanation2.y())
-        self.labelExplanation2.setFixedSize(int(self.width() * 0.446), int(self.height() * 0.725))
+        self.spinBox.move(int(self.width() * 0.0078125), int(self.height() * 0.875))
+        self.spinBox.setFixedSize(int(self.width() * 0.2578125), int(self.height() * 0.1111111111111111))
 
         return super(Questions, self).resizeEvent(event)
 
+    def radio(self, buttons):
+        while self.radioLayout.count():
+            child = self.radioLayout.takeAt(0)
+            if child.widget():
+                child.widget().deleteLater()
+        font = QtGui.QFont()
+        font.setFamily("Century Gothic")
+        font.setPointSize(10)
+        self.lst_radio = []
+        for i in buttons:
+            rd = QtWidgets.QRadioButton("radioButton")
+            rd.setText(i)
+            rd.setFont(font)
+            self.lst_radio.append(rd)
+            self.radioLayout.addWidget(rd)
+
+    def change_type(self):
+        with open(f"layouts/{self.name}/{self.number}.txt", "r") as file:
+            txt = []
+            line = file.readline().rstrip()
+            while line != "***№№№###buttons***№№№###" and line != "***№№№###range***№№№###":
+                txt.append(line)
+                line = file.readline().rstrip()
+            # self.TextEdit.clear()
+            self.TextEdit.setText("\n".join(txt))
+            if line == "***№№№###buttons***№№№###":
+                self.type = "buttons"
+                self.spinBox.setVisible(False)
+                self.horizontalLayoutWidget.setVisible(True)
+                colRd = int(file.readline().rstrip())
+                buttons = []
+                for i in range(colRd):
+                    buttons.append(file.readline().rstrip())
+                self.radio(buttons)
+            else:
+                self.type = "range"
+                self.spinBox.setVisible(True)
+                self.horizontalLayoutWidget.setVisible(False)
+                self.spinBox.setMinimum(int(file.readline().rstrip()))
+                self.spinBox.setMaximum(int(file.readline().rstrip()))
+                self.spinBox.setValue(int(file.readline().rstrip()))
+
     def logic(self):
-        self.labelQuestion.setText(self.keys[self.i])
-        self.labelExplanation1.setText(self.dict[self.keys[self.i]][0])
-        self.labelExplanation2.setText(self.dict[self.keys[self.i]][1])
-        self.ButtonNext.clicked.connect(self.next_question)
+        self.change_type()
+        self.pushButtonNext.clicked.connect(self.next_question)
+
+    def revert(self):
+        self.data.append(self.spinBox.value())
+        with open(f'layouts/{self.name}/base.csv', 'a', newline='') as file:
+            writer_object = writer(file)
+            writer_object.writerow(self.data)
+        self.self1.setVisible(True)
+        self.close()
 
     def next_question(self):
-        self.i += 1
-        self.setWindowTitle(f'Вопрос №{self.i + 1}')
-        self.data.append(self.spinBoxScore.value())
-        if self.i == len(self.keys):
-            mark = processing(self.data, self.nX, self.nY)
-            self.close()
-            self.w = Result(self.topic, self.width(), self.height(), self.isMaximized(), mark)
-            self.w.show()
-            return
-        self.spinBoxScore.setValue(0)
-        key = self.keys[self.i]
-        self.labelQuestion.setText(key)
-        self.labelExplanation1.setText(self.dict[key][0])
-        self.labelExplanation2.setText(self.dict[key][1])
+        if self.back:
+            self.revert()
+        if self.type == "buttons":
+            for i in self.lst_radio:
+                if i.isChecked():
+                    self.data.append(self.lst_radio.index(i))
+                    break
+            else:
+                ctypes.windll.user32.MessageBoxW(0,
+                                                 "Пожалуйста, выберете один из вариантов ответа",
+                                                 "Информация", 0)
+                return
+        else:
+            self.data.append(self.spinBox.value())
+        self.number += 1  # идем далее(доработать)
+        try:
+            open(f"layouts/{self.name}/{self.number}.txt", "r")
+        except Exception:
+            if self.self1:
+                self.setWindowTitle(f'Вопрос №{self.number}')
+                self.TextEdit.setText("Сколько дней вы уже проработали + сколько еще планируете проработать")
+                self.spinBox.setVisible(True)
+                self.horizontalLayoutWidget.setVisible(False)
+                self.spinBox.setMinimum(0)
+                self.spinBox.setMaximum(99999)
+                self.spinBox.setValue(0)
+                self.back = True
+                return
+            else:
+                mark = processing(self.data, self.name)
+                self.w = Result(self.topic, self.width(), self.height(), self.isMaximized(), mark)
+                self.w.show()
+                self.close()
+                return
+        self.setWindowTitle(f'Вопрос №{self.number}')
+        self.change_type()
 
     def design(self):
         if self.topic == "white":
             style = 'background: rgb(255,255,255);color: rgb(0,0,0);'
-            self.ButtonNext.setStyleSheet(style)
-            self.spinBoxScore.setStyleSheet(style)
+            self.pushButtonNext.setStyleSheet(style)
+            self.spinBox.setStyleSheet(style)
+            self.TextEdit.setStyleSheet("""
+                QTextBrowser {
+                    background-color: rgb(255,255,255);
+                    border-color: transparent;
+                    border-style: solid;
+                    border-radius: 4px;
+                    border-width: 3px;
+                }""" """
+                QScrollBar:vertical
+                {
+                    background-color: transparent;
+                    width: 15px;
+                    margin: 15px 3px 15px 3px;
+                    border: 1px transparent #2A2929;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical
+                {
+                    background-color: rgb(120,120,120);
+                    min-height: 5px;
+                    border-radius: 3px;
+                }
+                QScrollBar::sub-line:vertical
+                {
+                    margin: 3px 0px 3px 0px;
+                    border-image: url(:/qss_icons/rc/up_arrow_disabled.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: top;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::add-line:vertical
+                {
+                    margin: 3px 0px 3px 0px;
+                    border-image: url(:/qss_icons/rc/down_arrow_disabled.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: bottom;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on
+                {
+                    border-image: url(:/qss_icons/rc/up_arrow.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: top;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on
+                {
+                    border-image: url(:/qss_icons/rc/down_arrow.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: bottom;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical
+                {
+                    background: none;
+                }
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+                {
+                    background: none;
+                }""")
         else:
-            style = 'background: rgb(10,10,10);color: rgb(255,255,255); \
-                                 border-color: rgb(255,255,255);border-style: solid; \
+            style = 'background: rgb(10,10,10);color: rgb(150,150,150); \
+                                 border-color: rgb(50,50,50);border-style: solid; \
                                  border-radius: 4px; border-width: 3px;'
-            self.spinBoxScore.setStyleSheet(style)
-            self.ButtonNext.setStyleSheet(style)
-            style = 'color: rgb(255,255,255);'
-            self.labelQuestion.setStyleSheet(style)
-            self.labelExplanation1.setStyleSheet(style)
-            self.labelExplanation2.setStyleSheet(style)
-            self.trash.setStyleSheet(style)
+            self.pushButtonNext.setStyleSheet(style)
+            self.spinBox.setStyleSheet(style)
+            style = 'color: rgb(150,150,150);'
+            self.label.setStyleSheet(style)
+            self.horizontalLayoutWidget.setStyleSheet("QRadioButton { color: rgb(150,150,150);}")
+            self.TextEdit.setStyleSheet("""
+                QTextBrowser {
+                    background: rgb(10,10,10);color: 
+                    rgb(150,150,150);
+                    border-color: rgb(50,50,50);border-style: solid;
+                    border-radius: 4px; border-width: 3px;}""" """
+                QScrollBar:vertical
+                {
+                    background-color: transparent;
+                    width: 15px;
+                    margin: 15px 3px 15px 3px;
+                    border: 1px transparent #2A2929;
+                    border-radius: 4px;
+                }
+                QScrollBar::handle:vertical
+                {
+                    background-color: rgb(100,100,100);
+                    min-height: 5px;
+                    border-radius: 4px;
+                }
+                QScrollBar::sub-line:vertical
+                {
+                    margin: 3px 0px 3px 0px;
+                    border-image: url(:/qss_icons/rc/up_arrow_disabled.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: top;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::add-line:vertical
+                {
+                    margin: 3px 0px 3px 0px;
+                    border-image: url(:/qss_icons/rc/down_arrow_disabled.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: bottom;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::sub-line:vertical:hover,QScrollBar::sub-line:vertical:on
+                {
+                    border-image: url(:/qss_icons/rc/up_arrow.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: top;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::add-line:vertical:hover, QScrollBar::add-line:vertical:on
+                {
+                    border-image: url(:/qss_icons/rc/down_arrow.png);
+                    height: 10px;
+                    width: 10px;
+                    subcontrol-position: bottom;
+                    subcontrol-origin: margin;
+                }
+                QScrollBar::up-arrow:vertical, QScrollBar::down-arrow:vertical
+                {
+                    background: none;
+                }
+                QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical
+                {
+                    background: none;
+                }""")

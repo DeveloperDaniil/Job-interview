@@ -11,7 +11,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
 class Ui_Dialog(object):
     def setupUi(self, Dialog, topic):
         Dialog.setObjectName("Dialog")
-        Dialog.setMinimumSize(1024, 768)
+        Dialog.setMinimumSize(1280, 720)
         if topic == "white":
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/white_background.jpg")))
@@ -46,7 +46,7 @@ class Ui_Dialog(object):
         self.ButtonBack.setText(_translate("Dialog", "Назад"))
 
 
-class AboutProgram(QMainWindow, Ui_Dialog):
+class Files(QMainWindow, Ui_Dialog):
     resized = QtCore.pyqtSignal()
 
     def __init__(self, topic="white", x=1024, y=768, m=False):
@@ -90,7 +90,7 @@ class AboutProgram(QMainWindow, Ui_Dialog):
         self.ButtonBack.setFixedSize(int(self.width() * 0.4297), int(self.height() * 0.104))
         self.ButtonBack.move(int((self.width() / 2) - (self.ButtonBack.width() / 2)), int(self.height() * 0.802))
 
-        return super(AboutProgram, self).resizeEvent(event)
+        return super(Files, self).resizeEvent(event)
 
     def logic(self):
         self.ButtonBack.clicked.connect(self.back)

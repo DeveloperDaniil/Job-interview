@@ -1,25 +1,20 @@
+import csv
+
 import numpy as np
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 
 
-# требует качественного обучения
-def processing(new, x, y):
-    model = LogisticRegression(solver='lbfgs', random_state=0).fit(x, y)
-    new_x = new[3:]
-    x.append(new_x)
-    y.append(1)
-    x = np.array(x)
-    y = np.array(y)
-    model.fit(x, y)
-    mark = model.predict_proba(x)[-1][1]
-    new.append(int(mark + (0.6 if mark > 0 else -0.6)))
-    # threading.Thread(target=yandex, args=(new,)).start()
-    return int(mark * 100)
-
-# def yandex(new):
-#    Y = yadisk.YaDisk(token="AQAAAAA7SpTSAAd8zbO0v4G6B0dHklAfN0lo13g")
-#    with open("base.csv", mode="a", encoding='utf-8') as w_file:
-#        file_writer = csv.writer(w_file, delimiter=";", lineterminator="\r")
-#        file_writer.writerow(new)
-#    Y.remove("base.csv", permanently=True)
-#    Y.upload("base.csv", "base.csv")
+def processing(data, name):
+    Ox = []
+    Oy = []
+    with open(f'layouts/{name}/base.csv', 'r', newline='') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+        for row in spamreader:
+            Ox.append(row[:-1])
+            Oy.append(row[-1])
+    X = np.array(Ox)
+    y = np.array(Oy)
+    reg = LinearRegression().fit(X, y)
+    proba = np.array([data])
+    rez = int(reg.predict(proba))
+    return rez if rez > 0 else 0

@@ -12,7 +12,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myAppId)
 class Ui_Dialog(object):
     def setupUi(self, Dialog, topic):
         Dialog.setObjectName("Dialog")
-        Dialog.setMinimumSize(1024, 768)
+        Dialog.setMinimumSize(1280, 720)
         if topic == "white":
             palette = QPalette()
             palette.setBrush(QPalette.Background, QBrush(QPixmap("images/white_background.jpg")))
@@ -38,7 +38,7 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         _translate = QtCore.QCoreApplication.translate
         Dialog.setWindowTitle(_translate("Dialog", "Dialog"))
-        self.ButtonEnd.setText(_translate("Dialog", "Закончить собеседование"))
+        self.ButtonEnd.setText(_translate("Dialog", "Закрыть"))
 
 
 class Result(QMainWindow, Ui_Dialog):
@@ -57,7 +57,10 @@ class Result(QMainWindow, Ui_Dialog):
         self.setupUi(self, topic)
         self.design()
         self.setWindowTitle('Результат')
-        self.labelResult.setText(f"Кандидат готов к этой работе на {self.mark}%")
+        if self.mark == 0:
+            self.labelResult.setText("Мне кажется, что этот чувак нам не подходит")
+        else:
+            self.labelResult.setText(f"Кандидат примерно проработает {self.mark} дней")
         if m:
             self.showMaximized()
         else:
@@ -92,9 +95,9 @@ class Result(QMainWindow, Ui_Dialog):
             style = 'background: rgb(255,255,255);color: rgb(0,0,0);'
             self.ButtonEnd.setStyleSheet(style)
         else:
-            style = 'background: rgb(10,10,10);color: rgb(255,255,255); \
-                                 border-color: rgb(255,255,255);border-style: solid; \
+            style = 'background: rgb(10,10,10);color: rgb(150,150,150); \
+                                 border-color: rgb(50,50,50);border-style: solid; \
                                  border-radius: 4px; border-width: 3px;'
             self.ButtonEnd.setStyleSheet(style)
-            style = 'color: rgb(255,255,255);'
+            style = 'color: rgb(150,150,150)'
             self.labelResult.setStyleSheet(style)
